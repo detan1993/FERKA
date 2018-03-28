@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">FERKA</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Temperature</string>
+    <string name="title_notifications">Inventory</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="key_microbit1Name">BBC micro:bit</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
