@@ -52,6 +52,9 @@ OrderFragment.OnFragmentInteractionListener{
                     switchTemperature();
                     return true;
                 case R.id.navigation_notifications:
+                    switchOrder();
+                    return true;
+                case R.id.navigation_weight:
                     switchWeight();
                     return true;
 
@@ -75,6 +78,7 @@ OrderFragment.OnFragmentInteractionListener{
         tempFragment = new TemperatureSensorFragment();
         weightFragment = new WeighSensorFragment();
         homeFragment = new HomeFragment();
+        orderFragment = new OrderFragment();
 
         swithcHome();
 

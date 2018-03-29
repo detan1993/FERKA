@@ -12,6 +12,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -433,7 +434,11 @@ public class TemperatureSensorFragment extends Fragment {
                 {
                     System.err.println("********** Calling RESTful web service");
 
-                    URL url = new URL("http://192.168.43.203:3446/FoodEmblemV1-war/Resources/Sensor/updateRestaurantFridgeTemp");
+                    SharedPreferences sharedPref = getActivity().getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+                    String restaurantId = sharedPref.getString("staff_restaurantId",null);; // get restaurant Id from local file
+                    System.out.println("Restaurant Id: " + restaurantId);
+
+                    URL url = new URL(getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Sensor/updateRestaurantFridgeTemp/" + restaurantId);
                     //        URL url = new URL("http://" + + ":" + editTextServerPort.getText().toString() + "/JavaRestfulWebServices/Resources/Register");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
 
