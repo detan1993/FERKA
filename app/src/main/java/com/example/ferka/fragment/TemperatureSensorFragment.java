@@ -26,6 +26,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,11 +36,18 @@ import com.example.ferka.service.MicrobitSensorService;
 
 import com.example.ferka.R;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 public class TemperatureSensorFragment extends Fragment {
@@ -51,7 +60,8 @@ public class TemperatureSensorFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private TextView tempOutput;
+    private TextView tempOutput1;
+    private TextView tempOutput2;
     private View view;
 
     Handler handler;
@@ -66,6 +76,7 @@ public class TemperatureSensorFragment extends Fragment {
     private Boolean connected;
     private UpdateFridgeTemperatureAsyncTask updateFridge;
     public static int notificationId = 1;
+    private List<String> microbitIds ;
 
     public static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 800;
 
@@ -113,10 +124,34 @@ public class TemperatureSensorFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_temperature_sensor, container, false);
-        tempOutput = (TextView) view.findViewById(R.id.textView_Result);
-
+        microbitIds = new ArrayList<>();
+        tempOutput1 = (TextView) view.findViewById(R.id.textViewTempResult1);
+        tempOutput2 = (TextView) view.findViewById(R.id.textViewTempResult2);
+    //    microbitIds.add("FF:43:88:BB:AA:E5");
         Button buttonDoUart = (Button) view.findViewById(R.id.button_pairTemperature);
         buttonDoUart.setOnClickListener(new pairTemperatureButtonListener());
+
+
+        if(!checkBluetoothPermission()){
+
+            System.err.println("**************** Please Request Bluetooth Permision");
+            Toast.makeText(getActivity().getApplicationContext(), "Please Request Bluetooth Permision", Toast.LENGTH_LONG).show();
+
+        }
+        else
+        {
+
+            GetListOfFridgeMicrobitAysncTask a = new GetListOfFridgeMicrobitAysncTask();
+            a.execute("GET ALL FRIDGE MICROBIT");
+            //run aysn task here
+            bluetoothManager = (BluetoothManager) getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
+            bluetoothAdapter = bluetoothManager.getAdapter();
+            leScanCallback = new TemperatureSensorFragment.BleScanner();
+            handler.postDelayed(new TemperatureSensorFragment.StopBleScannerThread(), 45 * 1000);
+            bluetoothAdapter.startLeScan(leScanCallback);
+
+            updateTextViewtempOutput1("Scanning for your fridge sensor");
+        }
 
         return view;
 
@@ -171,13 +206,17 @@ public class TemperatureSensorFragment extends Fragment {
             }
             else
             {
+
+                GetListOfFridgeMicrobitAysncTask a = new GetListOfFridgeMicrobitAysncTask();
+                a.execute("GET ALL FRIDGE MICROBIT");
+                //run aysn task here
                 bluetoothManager = (BluetoothManager) getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
                 bluetoothAdapter = bluetoothManager.getAdapter();
                 leScanCallback = new TemperatureSensorFragment.BleScanner();
-                handler.postDelayed(new TemperatureSensorFragment.StopBleScannerThread(), 30 * 1000);
+                handler.postDelayed(new TemperatureSensorFragment.StopBleScannerThread(), 45 * 1000);
                 bluetoothAdapter.startLeScan(leScanCallback);
 
-                updateTextViewtempOutput("Scanning for ...sensor");
+                updateTextViewtempOutput1("Scanning for your fridge sensor");
             }
 
         }
@@ -252,28 +291,52 @@ public class TemperatureSensorFragment extends Fragment {
         @Override
         public void run()
         {
-            if(bluetoothDevice.getName() != null && bluetoothDevice.getName().equals(getString(R.string.key_microbit1Name)))
-            {
-                System.err.println("BleScannerThread.run(): " + bluetoothDevice.getName());
 
-                bluetoothAdapter.stopLeScan(leScanCallback);
-                bluetoothDevices.put(getString(R.string.key_microbit1Name), bluetoothDevice);
+                  if(!microbitIds.isEmpty()){
+                      System.err.println("****************** PRINTING MICROBIT SIZE "+ microbitIds.size());
+                       for(int noOfMicrobit=0; noOfMicrobit<microbitIds.size(); noOfMicrobit++){
+                           System.err.println("BleScannerThread.run(): INSIDE LOOP device name " + bluetoothDevice.getName());
+                           System.err.println("BleScannerThread.run(): INSIDE LOOP device address detected : " + bluetoothDevice.getAddress());
 
-                updateTextViewtempOutput("Found Sensor BBC micro:bit 1!");
 
-                microbitUartBroadcastReceiver = new TemperatureSensorFragment.MicrobitUartBroadcastReceiver();
-                IntentFilter intentFilter = new IntentFilter();
-                intentFilter.addAction(MicrobitUartService.ACTION_GATT_CONNECTED);
-                intentFilter.addAction(MicrobitUartService.ACTION_GATT_DISCONNECTED);
-                intentFilter.addAction(MicrobitUartService.ACTION_GATT_SERVICES_DISCOVERED);
-                intentFilter.addAction(MicrobitUartService.ACTION_DATA_AVAILABLE);
-                intentFilter.addAction(MicrobitUartService.ACTION_DATA_AVAILABLE_UART);
-                getActivity().registerReceiver(microbitUartBroadcastReceiver, intentFilter);
+                           String restaurantMicrobitID = microbitIds.get(noOfMicrobit);
+                           System.err.println("BleScannerThread.run(): INSIDE LOOP Restaurant MICROBIT : " + restaurantMicrobitID);
+                           //getString(R.string.key_microbit1Name)
+                        if(bluetoothDevice.getAddress().equals(restaurantMicrobitID))
+                        {
+                            //bluetoothDevice.getName() != null &&
 
-                String action = MicrobitUartService.ACTION_MICROBIT_UART;
+                            System.err.println("BleScannerThread.run() : " + bluetoothDevice.getName() + " " + bluetoothDevice.getUuids());
 
-                MicrobitUartService.startActionMicrobit(getActivity(), bluetoothDevice, action);
-            }
+                            bluetoothAdapter.stopLeScan(leScanCallback);
+                            bluetoothDevices.put(restaurantMicrobitID ,  bluetoothDevice);
+                           // bluetoothDevice.put()
+                        //  bluetoothDevices.put(getString(R.string.key_microbit1Name), bluetoothDevice);
+
+                            String microbitValue = String.valueOf(noOfMicrobit+1);
+                            updateTextViewtempOutput(  microbitValue ,"Found Your Fridge Sensor ID" +  microbitIds.get(noOfMicrobit));
+
+                           // updateTextViewtempOutput1("Found Your Fridge Sensor ID" + microbitIds.get(noOfMicrobit) );
+
+                            microbitUartBroadcastReceiver = new TemperatureSensorFragment.MicrobitUartBroadcastReceiver();
+                            IntentFilter intentFilter = new IntentFilter();
+                            intentFilter.addAction(MicrobitUartService.ACTION_GATT_CONNECTED);
+                            intentFilter.addAction(MicrobitUartService.ACTION_GATT_DISCONNECTED);
+                            intentFilter.addAction(MicrobitUartService.ACTION_GATT_SERVICES_DISCOVERED);
+                            intentFilter.addAction(MicrobitUartService.ACTION_DATA_AVAILABLE);
+                            intentFilter.addAction(MicrobitUartService.ACTION_DATA_AVAILABLE_UART);
+                            getActivity().registerReceiver(microbitUartBroadcastReceiver, intentFilter);
+
+                            String action = MicrobitUartService.ACTION_MICROBIT_UART;
+
+                            MicrobitUartService.startActionMicrobit(getActivity(), bluetoothDevice, action);
+                        }
+
+                    }
+
+                }
+
+
         }
     }
 
@@ -286,16 +349,23 @@ public class TemperatureSensorFragment extends Fragment {
         {
             Boolean foundMicrobit = false;
 
-            if(bluetoothDevices.get(getString(R.string.key_microbit1Name)) != null)
-            {
-                foundMicrobit = true;
+            for(int i=0; i<microbitIds.size(); i++){
+                if (bluetoothDevices.get(microbitIds.get(i)) != null){
+                    foundMicrobit = true;
+                    break;
+                }
             }
+        //    if (bluetoothDevices.get(getString()) != null)
+        //    if(microbitIds.contains(bluetoothDevices.get())
+        //    {
+         //       foundMicrobit = true;
+          //  }
 
             bluetoothAdapter.stopLeScan(leScanCallback);
 
             if(!foundMicrobit)
             {
-                updateTextViewtempOutput("Unable to find sensor. Try Again!");
+                updateTextViewtempOutput1("Unable to find your fridge sensor. Try Again!");
             }
         }
     }
@@ -319,14 +389,14 @@ public class TemperatureSensorFragment extends Fragment {
             }
             else if (action.equals(MicrobitSensorService.ACTION_GATT_SERVICES_DISCOVERED))
             {
-                updateTextViewtempOutput("*** Discovered the following services");
+                updateTextViewtempOutput1("*** Discovered the following services");
                 BluetoothGattService gattServiceMicrobitUart = intent.getParcelableExtra(MicrobitUartService.EXTRA_BLUETOOTH_GATT_SERVICE_MICROBIT_UART);
 
-                updateTextViewtempOutput("MicroBit UART Service: " + gattServiceMicrobitUart.getUuid().toString());
+                updateTextViewtempOutput1("MicroBit UART Service: " + gattServiceMicrobitUart.getUuid().toString());
             }
             else if (action.equals(MicrobitSensorService.ACTION_DATA_AVAILABLE))
             {
-                updateTextViewtempOutput("Unexpected data!");
+                updateTextViewtempOutput1("Unexpected data!");
             }
             else if (action.equals(MicrobitUartService.ACTION_DATA_AVAILABLE_UART))
             {
@@ -334,12 +404,17 @@ public class TemperatureSensorFragment extends Fragment {
 
                 System.err.println("**************(action.equals(MicrobitUartService.ACTION_DATA_AVAILABLE_UART))");
                 String tempValue = intent.getStringExtra(MicrobitSensorService.EXTRA_DATA_1);
+                String[] tempValue_FridgeID = intent.getStringExtra(MicrobitSensorService.EXTRA_DATA_1).split("_");
                 String restaurantId = "1";
-                String fridgeId = "1";
+                String fridgeId = tempValue_FridgeID[1];
+                String fridgeTemp  = tempValue_FridgeID[0];
                 //updateTextViewUartOutput("Command: " + intent.getIntExtra(MicrobitSensorService.EXTRA_DATA_1, -1));
-                System.err.println("**************** Calling Updating fridge Async task");
-                updateFridge = new UpdateFridgeTemperatureAsyncTask(restaurantId, fridgeId, tempValue);
+                System.err.println("**************** Calling Updating fridge Async task + FRIDGE ID " + fridgeId  + " tem Value " + fridgeTemp);
+                updateFridge = new UpdateFridgeTemperatureAsyncTask(restaurantId, fridgeId, fridgeTemp);
                 updateFridge.execute("Update Fridge in progress");
+
+
+               updateTextViewtempOutput(fridgeId , fridgeTemp.substring(2) );
 
                 if(tempValue.equals("CC-Table1"))
                 {
@@ -355,13 +430,13 @@ public class TemperatureSensorFragment extends Fragment {
 
                     notify.flags |= Notification.FLAG_AUTO_CANCEL;
                     notif.notify(notificationId, notify);
-
                 }
-                updateTextViewtempOutput( tempValue.substring(2));
 
-
-
-
+              /*  if(fridgeId.equals("1")){
+                    updateTextViewtempOutput1(fridgeTemp.substring(2));
+                }else if(fridgeId.equals("2")) {
+                    updateTextViewtempOutput2(fridgeTemp.substring(2));
+                }*/
 
 
             }
@@ -371,12 +446,35 @@ public class TemperatureSensorFragment extends Fragment {
     }
 
 
+    private void updateTextViewtempOutput(String textboxId, String val)
+    {
+        //   tempOutput.append("\r\n" + val);
+        if(textboxId.equals("1")){
+            tempOutput1.setText(val + " Celcius");
+        }
+        else if(textboxId.equals("2")){
+            tempOutput2.setText(val + " Celcius");
+        }
 
-    private void updateTextViewtempOutput(String val)
+    }
+
+
+
+    private void updateTextViewtempOutput1( String val)
     {
      //   tempOutput.append("\r\n" + val);
-        tempOutput.setText(val + " Celcius");
+        tempOutput1.setText(val + " Celcius");
+        //tempOutput2.setText(val + " Celcius");
     }
+
+    private void updateTextViewtempOutput2(String val){
+        tempOutput2.setText(val + " Celcius");
+    }
+
+   private void updateTextViewtempOutput1(String fridgeId, String val){
+
+       tempOutput1.setText(val + " Celcius");
+   }
 
 
     private void doUpdateFridge(String value)
@@ -438,7 +536,7 @@ public class TemperatureSensorFragment extends Fragment {
                     String restaurantId = sharedPref.getString("staff_restaurantId",null);; // get restaurant Id from local file
                     System.out.println("Restaurant Id: " + restaurantId);
 
-                    URL url = new URL(getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Sensor/updateRestaurantFridgeTemp/" + restaurantId);
+                    URL url = new URL(getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Sensor/updateRestaurantFridgeTemp");
                     //        URL url = new URL("http://" + + ":" + editTextServerPort.getText().toString() + "/JavaRestfulWebServices/Resources/Register");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
 
@@ -493,6 +591,110 @@ public class TemperatureSensorFragment extends Fragment {
             System.err.println("Update succesfully");
         }
     }
+
+
+
+    protected class GetListOfFridgeMicrobitAysncTask extends AsyncTask<String, Integer, String> {
+        private String temperatureToUpdateValue;
+        private String restaurantId;
+        private String fridgeId;
+
+        public GetListOfFridgeMicrobitAysncTask() {
+        }
+
+        public String getRestaurantId(){
+            return restaurantId;
+        }
+
+        public String getTemperatureValue() {
+            return temperatureToUpdateValue;
+        }
+
+        public String getFridgeId(){
+
+            return fridgeId;
+        }
+
+        @Override
+        public void onPreExecute() {
+        }
+
+        @Override
+        public String doInBackground(String... params) {
+
+            System.out.println("*************** param[0] " + params[0]);
+            try {
+
+                try
+                {
+                    System.err.println("********** Calling Get All Fridge RESTful web service");
+                    SharedPreferences sharedPref = getActivity().getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+                    String restaurantId = sharedPref.getString("staff_restaurantId",null);; // get restaurant Id from local file
+                    System.out.println("Restaurant Id: " + restaurantId);
+
+                    System.err.println("********** Calling get Fridges Rest web service");
+                    URL url = new URL(getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Sensor/getRestaurantAllFridgeSensors/" + restaurantId + "");
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    InputStream inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                    StringBuilder stringBuilder = new StringBuilder();
+
+                    String line = null;
+
+                    while ((line = bufferedReader.readLine()) != null)
+                    {
+                        stringBuilder.append(line);
+                    }
+
+                    return stringBuilder.toString(); //complete json string
+
+                }
+                catch(Exception ex)
+                {
+                    ex.printStackTrace();
+                }
+
+                return "";
+
+
+
+            } catch (Exception ex) {
+
+                System.err.println("**************** error calling fridge sensor API");
+
+
+                ex.printStackTrace();
+            }
+
+
+            return "Async Task Completed";
+        }
+
+        @Override
+        protected void onPostExecute(String jsonString) {
+
+            //this is how we populate the value obtained from web service to list view.
+            try{
+                JSONObject jsonObject = new JSONObject(jsonString);
+                JSONArray jsonArray = jsonObject.getJSONArray("sensors");
+                //jsonObject.getString()
+                for (int i = 0; i < jsonArray.length(); i++)
+                {
+                    microbitIds.add(jsonArray.getJSONObject(i).getString("sensorId"));
+                    System.err.println("********************JSONRESULT IS " + jsonArray.getJSONObject(i).getString("sensorId"));
+                }
+
+
+            }
+
+            catch(Exception ex){
+
+            }
+
+
+        }
+    }
+
 
 
 }

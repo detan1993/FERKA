@@ -22,33 +22,53 @@
             android:text="Pair With Temperature Sensor" />
 
         <TextView
-            android:id="@+id/textViewTemp"
+            android:id="@+id/textViewTemp1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignStart="@+id/button_pairTemperature"
             android:layout_below="@+id/button_pairTemperature"
             android:layout_marginTop="48dp"
             android:text="Fridge (#1) Temperature:"
-            />
+            android:textSize="17dp" />
 
         <TextView
-            android:id="@+id/textView_Result"
+            android:id="@+id/textViewTempResult1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBaseline="@+id/textViewTemp"
-            android:layout_alignBottom="@+id/textViewTemp"
-            android:layout_marginStart="56dp"
-            android:layout_toEndOf="@+id/textViewTemp"
-            android:text="TextView" />
+            android:layout_alignStart="@+id/textViewTemp1"
+            android:layout_below="@+id/textViewTemp1"
+            android:layout_marginTop="13dp"
+            android:text="TextView"
+            android:textSize="19dp" />
 
-     <!--   <Button
-            android:id="@+id/button_permission"
+        <TextView
+            android:id="@+id/textViewTemp2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/textViewTemp"
-            android:layout_marginTop="77dp"
-            android:layout_toStartOf="@+id/textView_Result"
-            android:text="Button" /> !-->
+            android:layout_alignStart="@+id/textViewTempResult2"
+            android:layout_below="@+id/textViewTempResult1"
+            android:layout_marginTop="46dp"
+            android:text="Fridge (#2) Temperature:"
+            android:textSize="17dp" />
+
+        <TextView
+            android:id="@+id/textViewTempResult2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignStart="@+id/textViewTempResult1"
+            android:layout_below="@+id/textViewTemp2"
+            android:layout_marginTop="19dp"
+            android:text=""
+            android:textSize="19dp" />
+
+        <!--   <Button
+               android:id="@+id/button_permission"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:layout_below="@+id/textViewTemp"
+               android:layout_marginTop="77dp"
+               android:layout_toStartOf="@+id/textView_Result"
+               android:text="Button" /> !-->
     </RelativeLayout>
 
 </FrameLayout>

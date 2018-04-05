@@ -27,7 +27,7 @@ public class MicrobitUartService extends IntentService {
     public static final String EXTRA_BLUETOOTH_DEVICE = "com.example.mysecondapp.service.extra.EXTRA_BLUETOOTH_DEVICE";
     public static final String EXTRA_BLUETOOTH_GATT_SERVICE_MICROBIT_UART = "com.example.mysecondapp.service.extra.EXTRA_BLUETOOTH_GATT_SERVICE_MICROBIT_UART";
     public static final String EXTRA_DATA_1 = "com.example.mysecondapp.service.extra.EXTRA_DATA_1";
-
+    //9900000043114e4500309003000000510000000097969901
     public static final String BLUETOOTH_GATT_SERVICE_MICROBIT_UART_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
     public static final String BLUETOOTH_GATT_SERVICE_MICROBIT_UART_RX_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
     public static final String BLUETOOTH_GATT_SERVICE_MICROBIT_UART_TX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";

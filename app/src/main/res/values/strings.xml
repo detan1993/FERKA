@@ -5,7 +5,7 @@
     <string name="title_notifications">Inventory</string>
     <string name="title_weight">Weight</string>
 
-    <string name="VM_address">http://10.0.2.2:8080/</string>
+    <string name="VM_address">http://192.168.43.203:3446/</string>
     <string name="preference_file_key">ferka.SECRET_PREFERENCES</string>
 
     <!-- TODO: Remove or change this placeholder text -->
