@@ -159,61 +159,77 @@ public class OrderFragment extends Fragment {
             try{
                 JSONObject jsonObject = new JSONObject(jsonString);
                 JSONArray jsonArray = jsonObject.getJSONArray("customerOrders");
-                List<HashMap<String,String>> orderList = new ArrayList<HashMap<String,String>>();
-
                 System.out.println("Number of Orders: " + jsonArray.length());
-                TableLayout tableLayout =(TableLayout) getActivity().findViewById(R.id.tb_layout);
+
+                List<Order> orderList = new ArrayList<Order>();
+                List<Dish> dishes = new ArrayList<Dish>();
+                for(int i=0; i <jsonArray.length();i++){
+                    String orderId = jsonArray.getJSONObject(i).getString("orderId");
+                    String dishName = jsonArray.getJSONObject(i).getString("dishName");
+                    String quantity = jsonArray.getJSONObject(i).getString("qty");
+                    long orderIdLong = Long.parseLong(orderId);
+
+                    Dish dish = new Dish(dishName,Integer.parseInt(quantity));
+                    boolean isInOrder = false;
+                    for(Order o : orderList){
+                        if(o.orderId == orderIdLong){
+                            isInOrder = true;
+                            o.dish.add(dish);
+                        }
+                    }
+                    if(!isInOrder){
+                        Order newOrder = new Order(orderIdLong,dish);
+                        orderList.add(newOrder);
+                    }
+                }
+
+                final TableLayout tableLayout =(TableLayout) getActivity().findViewById(R.id.tb_layout);
                 TableRow.LayoutParams  params1=new TableRow.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT,1.0f);
                 TableRow.LayoutParams params2=new TableRow.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
                 tableLayout.removeAllViewsInLayout();
-                System.out.println("Clear table views");
 
-                for (int i = 0; i < jsonArray.length(); i++)
-                {
-                    String orderId = jsonArray.getJSONObject(i).getString("orderId");
-                    final long orderIdLong = Long.parseLong(orderId);
-
-                    String dishId = jsonArray.getJSONObject(i).getString("dishId");
-                    String quantity = jsonArray.getJSONObject(i).getString("qty");
-                    System.out.println("Inside Order number : " + i + "," + orderId  + "," + dishId + "," + quantity);
-
-
+                for(final Order o : orderList){
+                    final Order finalOrder = o;
                     TableRow tr_top = new TableRow(getContext());
-                    TableRow tr_middle = new TableRow(getContext());
-                    TableRow tr_bottom = new TableRow(getContext());
-
                     TextView tv_orderId = new TextView(getContext());
-                    tv_orderId.setText("Order Id: #" + orderId);
+
+                    tv_orderId.setText("Order Id: #" + o.orderId);
                     tv_orderId.setLayoutParams(params1);
 
-                    TextView tv_dishId = new TextView(getContext());
-                    tv_dishId.setText("Name: " + dishId);
-                    tv_dishId.setLayoutParams(params1);
-                    TextView tv_quantity =new TextView(getContext());
-                    tv_quantity.setText("Quantity: " + quantity);
-                    tv_quantity.setLayoutParams(params1);
+                    tr_top.addView(tv_orderId, params1);
+                    tableLayout.addView(tr_top,params2);
+
+                    for(Dish d : o.dish){
+                        TableRow tr_middle = new TableRow(getContext());
+
+                        TextView tv_dishId = new TextView(getContext());
+                        tv_dishId.setLayoutParams(params1);
+                        TextView tv_quantity =new TextView(getContext());
+                        tv_quantity.setLayoutParams(params1);
+
+                        tv_dishId.setText("Name: " + d.dishName);
+                        tv_quantity.setText("Quantity: " + d.quantity);
+
+                        tr_middle.addView(tv_dishId, params1);
+                        tr_middle.addView(tv_quantity, params1);
+                        tableLayout.addView(tr_middle,params2);
+                    }
+
+                    TableRow tr_bottom = new TableRow(getContext());
 
                     Button myButton = new Button(getActivity());
                     myButton.setText("Complete Dish");
                     myButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            UpdateCookingWebService(orderIdLong);
-                            View row = (View) v.getParent();
-                            ViewGroup container = ((ViewGroup)row.getParent());
-                            container.removeView(row);
-                            container.invalidate();
+                            UpdateCookingWebService(finalOrder.orderId);
+                            TableRow row = (TableRow) v.getParent();
+                            DestroyRows(tableLayout,o, row);
                         }
                     });
 
-                    tr_top.addView(tv_orderId, params1);
-                    tr_middle.addView(tv_dishId, params1);
-                    tr_middle.addView(tv_quantity, params1);
                     tr_bottom.addView(myButton, params1);
-                    tableLayout.addView(tr_top,params2);
-                    tableLayout.addView(tr_middle,params2);
                     tableLayout.addView(tr_bottom,params2);
-
                 }
             }
 
@@ -221,7 +237,60 @@ public class OrderFragment extends Fragment {
                 ex.printStackTrace();
             }
         }
+
+        private class Order{
+            long orderId;
+            List<Dish> dish;
+
+            public Order(){
+
+            }
+
+            public Order(long orderId, Dish dish){
+                this.orderId = orderId;
+                this.dish = new ArrayList<Dish>();
+                this.dish.add(dish);
+            }
+            public Order(long orderId, List<Dish> dish){
+                this.orderId = orderId;
+                this.dish = dish;
+            }
+
+            public boolean indexOfOrder(long orderId){
+                return this.orderId == orderId;
+            }
+        }
+        private class Dish{
+            String dishName;
+            int quantity;
+
+            public Dish(){
+
+            }
+            public Dish(String dishName, int quantity){
+                this.dishName = dishName;
+                this.quantity = quantity;
+            }
+        }
+        private void DestroyRows(TableLayout tableLayout, Order o, TableRow row){
+
+            int index = tableLayout.indexOfChild(row);
+            ViewGroup container = ((ViewGroup)row.getParent());
+            container.removeView(row);
+            container.invalidate();
+
+            System.out.println("************INDEX OF BUTTON IS : " + index + "******************");
+            for(int i=1;i<o.dish.size()+2;i++){
+                System.out.println("***************** GOING TO REMOVE INDEX: " + (index-i));
+                TableRow r = (TableRow)tableLayout.getChildAt(index-i);
+                ViewGroup c = ((ViewGroup)r.getParent());
+                c.removeView(r);
+                c.invalidate();
+            }
+        }
     }
+
+
 
     public void UpdateCookingWebService(long id){
         final long orderId = id;
@@ -231,6 +300,7 @@ public class OrderFragment extends Fragment {
             {
                 try
                 {
+                    System.out.println("*************************UPDATE COOKING WS CALLED");
                     String wsPath = getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Customer/updateCustomerOrder/" + orderId;
                     URL url = new URL(wsPath);
 
@@ -263,6 +333,8 @@ public class OrderFragment extends Fragment {
             {
                 try {
                     JSONObject jsonObject = new JSONObject(jsonString);
+                    String result = jsonObject.getString("isUpdated");
+                    System.out.println("******************** IS UPDATED: " + result);
                 }catch(Exception ex){
 
                 }
