@@ -1,6 +1,7 @@
 package com.example.ferka.fragment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,10 +10,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -21,6 +24,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.example.ferka.R;
+import com.example.ferka.activity.LoginActivity;
 import com.example.ferka.activity.MainActivity;
 
 import org.json.JSONArray;
@@ -114,11 +118,6 @@ public class OrderFragment extends Fragment {
     protected class DoRetrieveOrderAsyncTask extends AsyncTask<String, Integer, String>
     {
         @Override
-        protected void onPreExecute()
-        {
-        }
-
-        @Override
         protected String doInBackground(String... params)
         {
             try
@@ -150,13 +149,6 @@ public class OrderFragment extends Fragment {
 
             return "Async Task Completed";
         }
-
-        @Override
-        protected void onProgressUpdate(Integer... progress)
-        {
-
-        }
-
         @Override
         protected void onPostExecute(String jsonString)
         {
@@ -179,9 +171,12 @@ public class OrderFragment extends Fragment {
                 for (int i = 0; i < jsonArray.length(); i++)
                 {
                     String orderId = jsonArray.getJSONObject(i).getString("orderId");
+                    final long orderIdLong = Long.parseLong(orderId);
+
                     String dishId = jsonArray.getJSONObject(i).getString("dishId");
                     String quantity = jsonArray.getJSONObject(i).getString("qty");
                     System.out.println("Inside Order number : " + i + "," + orderId  + "," + dishId + "," + quantity);
+
 
                     TableRow tr_top = new TableRow(getContext());
                     TableRow tr_middle = new TableRow(getContext());
@@ -194,13 +189,22 @@ public class OrderFragment extends Fragment {
                     TextView tv_dishId = new TextView(getContext());
                     tv_dishId.setText("Name: " + dishId);
                     tv_dishId.setLayoutParams(params1);
-
                     TextView tv_quantity =new TextView(getContext());
                     tv_quantity.setText("Quantity: " + quantity);
                     tv_quantity.setLayoutParams(params1);
 
                     Button myButton = new Button(getActivity());
                     myButton.setText("Complete Dish");
+                    myButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            UpdateCookingWebService(orderIdLong);
+                            View row = (View) v.getParent();
+                            ViewGroup container = ((ViewGroup)row.getParent());
+                            container.removeView(row);
+                            container.invalidate();
+                        }
+                    });
 
                     tr_top.addView(tv_orderId, params1);
                     tr_middle.addView(tv_dishId, params1);
@@ -217,9 +221,54 @@ public class OrderFragment extends Fragment {
                 ex.printStackTrace();
             }
         }
-
     }
 
+    public void UpdateCookingWebService(long id){
+        final long orderId = id;
+        new AsyncTask<Void,Void,String>(){
+            @Override
+            protected String doInBackground(Void... voids)
+            {
+                try
+                {
+                    String wsPath = getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Customer/updateCustomerOrder/" + orderId;
+                    URL url = new URL(wsPath);
+
+                    System.err.print("*************************** doInBackground() - Web Service Path: " + wsPath);
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestProperty("Accept","*/*");
+                    InputStream inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                    StringBuilder stringBuilder = new StringBuilder();
+
+                    String line = null;
+
+                    while ((line = bufferedReader.readLine()) != null)
+                    {
+                        stringBuilder.append(line);
+                    }
+
+                    return stringBuilder.toString();
+
+                }catch(Exception ex){
+
+                    ex.printStackTrace();
+                }
+
+                return "";
+            }
+
+            @Override
+            protected void onPostExecute(String jsonString)
+            {
+                try {
+                    JSONObject jsonObject = new JSONObject(jsonString);
+                }catch(Exception ex){
+
+                }
+            }
+        }.execute();
+    }
     public void retrieveContainer(){
         doRetrieveOrderAsyncTask = new DoRetrieveOrderAsyncTask();
         doRetrieveOrderAsyncTask.execute("Current progress");
