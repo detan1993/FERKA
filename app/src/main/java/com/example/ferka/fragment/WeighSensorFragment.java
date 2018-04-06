@@ -115,7 +115,7 @@ public class WeighSensorFragment extends Fragment {
                 System.out.println("Container webservice doInBackground()");
 
                 SharedPreferences sharedPref = getActivity().getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-                String restaurantId = sharedPref.getString("staff_restaurantId",null);; // get restaurant Id from local file
+                String restaurantId = sharedPref.getString("staff_restaurantId",null); // get restaurant Id from local file
                 System.out.println("Restaurant Id: " + restaurantId);
 
                 URL url = new URL(getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Sensor/getContainersByRestaurantId/" + restaurantId);
@@ -150,6 +150,10 @@ public class WeighSensorFragment extends Fragment {
         @Override
         protected void onPostExecute(String jsonString)
         {
+            if(isAdded()){
+                getResources().getString(R.string.app_name);
+            }
+
             try{
                 JSONObject jsonObject = new JSONObject(jsonString);
                 JSONArray jsonArray = jsonObject.getJSONArray("containers");

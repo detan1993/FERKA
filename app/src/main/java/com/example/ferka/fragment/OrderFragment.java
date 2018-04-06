@@ -1,5 +1,6 @@
 package com.example.ferka.fragment;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,8 +12,13 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 
 import com.example.ferka.R;
 import com.example.ferka.activity.MainActivity;
@@ -122,7 +128,7 @@ public class OrderFragment extends Fragment {
                 String restaurantId = sharedPref.getString("staff_restaurantId",null);; // get restaurant Id from local file
                 System.out.println("Restaurant Id: " + restaurantId);
 
-                URL url = new URL(getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Restaurant/getContainersByRestaurantId/" + restaurantId);
+                URL url = new URL(getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Restaurant/retrieveCustomerOrders/" + restaurantId);
                 HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                 InputStream inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -154,33 +160,57 @@ public class OrderFragment extends Fragment {
         @Override
         protected void onPostExecute(String jsonString)
         {
+            if(isAdded()){
+                getResources().getString(R.string.app_name);
+            }
+
             try{
                 JSONObject jsonObject = new JSONObject(jsonString);
-                JSONArray jsonArray = jsonObject.getJSONArray("orders");
+                JSONArray jsonArray = jsonObject.getJSONArray("customerOrders");
                 List<HashMap<String,String>> orderList = new ArrayList<HashMap<String,String>>();
 
                 System.out.println("Number of Orders: " + jsonArray.length());
+                TableLayout tableLayout =(TableLayout) getActivity().findViewById(R.id.tb_layout);
+                TableRow.LayoutParams  params1=new TableRow.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT,1.0f);
+                TableRow.LayoutParams params2=new TableRow.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+                tableLayout.removeAllViewsInLayout();
+                System.out.println("Clear table views");
+
                 for (int i = 0; i < jsonArray.length(); i++)
                 {
-                    System.out.println("Inside Order number : " + i+1);
-                    HashMap<String,String>  dataToStore = new HashMap<String,String>();
-                    dataToStore.put("orderId" , "Id: " + jsonArray.getJSONObject(i).getString("id"));
+                    String orderId = jsonArray.getJSONObject(i).getString("orderId");
+                    String dishId = jsonArray.getJSONObject(i).getString("dishId");
+                    String quantity = jsonArray.getJSONObject(i).getString("qty");
+                    System.out.println("Inside Order number : " + i + "," + orderId  + "," + dishId + "," + quantity);
 
-                    JSONObject inventoryJSONObject = jsonArray.getJSONObject(i).getJSONObject("inventory");
-                    dataToStore.put("inventoryId", "Id: " + inventoryJSONObject.getString("id"));
-                    dataToStore.put("inventoryName", "Name: " + inventoryJSONObject.getString("name"));
+                    TableRow tr_top = new TableRow(getContext());
+                    TableRow tr_middle = new TableRow(getContext());
+                    TableRow tr_bottom = new TableRow(getContext());
 
-                    double inventoryWeight = Double.parseDouble(inventoryJSONObject.getString("weight"));
-                    double containerWeight = Double.parseDouble(jsonArray.getJSONObject(i).getString(   "weight"));
-                    dataToStore.put("inventoryWeight", "Weight: " + String.valueOf(inventoryWeight-containerWeight));
+                    TextView tv_orderId = new TextView(getContext());
+                    tv_orderId.setText("Order Id: #" + orderId);
+                    tv_orderId.setLayoutParams(params1);
 
-                    orderList.add(dataToStore);
+                    TextView tv_dishId = new TextView(getContext());
+                    tv_dishId.setText("Name: " + dishId);
+                    tv_dishId.setLayoutParams(params1);
+
+                    TextView tv_quantity =new TextView(getContext());
+                    tv_quantity.setText("Quantity: " + quantity);
+                    tv_quantity.setLayoutParams(params1);
+
+                    Button myButton = new Button(getActivity());
+                    myButton.setText("Complete Dish");
+
+                    tr_top.addView(tv_orderId, params1);
+                    tr_middle.addView(tv_dishId, params1);
+                    tr_middle.addView(tv_quantity, params1);
+                    tr_bottom.addView(myButton, params1);
+                    tableLayout.addView(tr_top,params2);
+                    tableLayout.addView(tr_middle,params2);
+                    tableLayout.addView(tr_bottom,params2);
+
                 }
-                String[] from = {"containerId" , "inventoryId" , "inventoryName" , "inventoryWeight"};
-                int[] to = {R.id.tv_container, R.id.tv_inventoryId , R.id.tv_inventoryName,  R.id.tv_inventoryWeight};
-                SimpleAdapter adapter = new SimpleAdapter(getActivity().getBaseContext(), orderList, R.layout.containerlistview_layout, from, to);
-                ListView listView = ( ListView ) view.findViewById(R.id.lv_inventory);
-                listView.setAdapter(adapter);
             }
 
             catch(Exception ex){
