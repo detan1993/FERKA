@@ -47,6 +47,13 @@ public class LoginActivity extends AppCompatActivity {
 
                     String email = email_tb.getText().toString();
                     String pwd = password_tb.getText().toString();
+
+                    //Web service need 2 parameters
+                    if(email.length() <1 || pwd.length()<1){
+                        email = "fakeemail";
+                        pwd = "fakepwd";
+                    }
+
                     String wsPath = getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/RestaurantEmployee/login/" + email + "/" + pwd;
                     URL url = new URL(wsPath);
 

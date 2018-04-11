@@ -1,44 +1,34 @@
 package com.example.ferka.fragment;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.example.ferka.R;
-import com.example.ferka.activity.LoginActivity;
-import com.example.ferka.activity.MainActivity;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -99,7 +89,7 @@ public class OrderFragment extends Fragment {
         }
 
         this.handler = new Handler();
-        this.handler.postDelayed(m_Runnable,5000);
+       // this.handler.postDelayed(m_Runnable,10000);
         m_Runnable.run();
     }
 
@@ -122,10 +112,10 @@ public class OrderFragment extends Fragment {
         {
             try
             {
-                System.out.println("Order webservice doInBackground()");
+                System.out.println("***************************Order webservice doInBackground()");
                 SharedPreferences sharedPref = getActivity().getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
                 String restaurantId = sharedPref.getString("staff_restaurantId",null);; // get restaurant Id from local file
-                System.out.println("Restaurant Id: " + restaurantId);
+                System.out.println("***************************Restaurant Id: " + restaurantId);
 
                 URL url = new URL(getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Restaurant/retrieveCustomerOrders/" + restaurantId);
                 HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -159,10 +149,9 @@ public class OrderFragment extends Fragment {
             try{
                 JSONObject jsonObject = new JSONObject(jsonString);
                 JSONArray jsonArray = jsonObject.getJSONArray("customerOrders");
-                System.out.println("Number of Orders: " + jsonArray.length());
+                System.out.println("***************************Number of Orders: " + jsonArray.length());
 
                 List<Order> orderList = new ArrayList<Order>();
-                List<Dish> dishes = new ArrayList<Dish>();
                 for(int i=0; i <jsonArray.length();i++){
                     String orderId = jsonArray.getJSONObject(i).getString("orderId");
                     String dishName = jsonArray.getJSONObject(i).getString("dishName");
@@ -300,13 +289,25 @@ public class OrderFragment extends Fragment {
             {
                 try
                 {
-                    System.out.println("*************************UPDATE COOKING WS CALLED");
-                    String wsPath = getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Customer/updateCustomerOrder/" + orderId;
+                    System.out.println("*************************UPDATE COOKING WS CALLED: " + orderId);
+                    String wsPath = getString(R.string.VM_address) + "FoodEmblemV1-war/Resources/Customer/updateCustomerOrder";
                     URL url = new URL(wsPath);
 
-                    System.err.print("*************************** doInBackground() - Web Service Path: " + wsPath);
+                    System.out.print("*************************** doInBackground() - Web Service Path: " + wsPath);
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    httpURLConnection.setRequestProperty("Accept","*/*");
+                    httpURLConnection.setRequestMethod("POST");
+                    httpURLConnection.setDoOutput(true);
+                    httpURLConnection.setRequestProperty("Content-Type", "application/json");
+                    httpURLConnection.setRequestProperty("Accept", "application/json");
+
+                    JSONObject orderReq = new JSONObject();
+                    orderReq.put("orderId",orderId);
+
+                    DataOutputStream wr = new DataOutputStream(httpURLConnection.getOutputStream());
+                    wr.writeBytes(orderReq.toString());
+                    wr.flush();
+                    wr.close();
+
                     InputStream inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                     StringBuilder stringBuilder = new StringBuilder();
