@@ -110,6 +110,9 @@ public class WeighSensorFragment extends Fragment {
         @Override
         protected String doInBackground(String... params)
         {
+            if(!isAdded()) {
+                return "";
+            }
             try
             {
                 System.out.println("Container webservice doInBackground()");
@@ -150,8 +153,8 @@ public class WeighSensorFragment extends Fragment {
         @Override
         protected void onPostExecute(String jsonString)
         {
-            if(isAdded()){
-                getResources().getString(R.string.app_name);
+            if(!isAdded()) {
+                return;
             }
 
             try{

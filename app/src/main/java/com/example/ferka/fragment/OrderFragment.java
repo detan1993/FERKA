@@ -110,6 +110,9 @@ public class OrderFragment extends Fragment {
         @Override
         protected String doInBackground(String... params)
         {
+            if(!isAdded()) {
+                return "";
+            }
             try
             {
                 System.out.println("***************************Order webservice doInBackground()");
@@ -142,8 +145,8 @@ public class OrderFragment extends Fragment {
         @Override
         protected void onPostExecute(String jsonString)
         {
-            if(isAdded()){
-                getResources().getString(R.string.app_name);
+            if(!isAdded()) {
+                return;
             }
 
             try{

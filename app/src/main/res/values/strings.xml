@@ -2,10 +2,10 @@
     <string name="app_name">FERKA</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Temperature</string>
-    <string name="title_notifications">Inventory</string>
+    <string name="title_notifications">Order</string>
     <string name="title_weight">Weight</string>
 
-    <string name="VM_address">http://192.168.43.203:3446/</string>
+    <string name="VM_address">http://172.25.103.169/8080/</string>
     <string name="preference_file_key">ferka.SECRET_PREFERENCES</string>
 
     <!-- TODO: Remove or change this placeholder text -->
