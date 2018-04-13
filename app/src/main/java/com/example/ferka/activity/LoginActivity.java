@@ -27,6 +27,26 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        if(checkLoggedIn()){
+            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+        }
+
+    }
+
+    public boolean checkLoggedIn(){
+            SharedPreferences sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+
+            if(sharedPref == null){
+                return false;
+            }
+
+            String restaurantId = sharedPref.getString("staff_restaurantId",null); // get restaurant Id from local file
+
+            if(restaurantId == null){
+                return false;
+            }
+
+            return restaurantId.length()>0;
     }
 
     public void LoginWebservice(View view){
