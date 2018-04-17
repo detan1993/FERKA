@@ -5,7 +5,7 @@
     <string name="title_notifications">Order</string>
     <string name="title_weight">Weight</string>
 
-    <string name="VM_address">http://172.25.103.169/8080/</string>
+    <string name="VM_address">http://is4151-gp02.southeastasia.cloudapp.azure.com:8080/</string>
     <string name="preference_file_key">ferka.SECRET_PREFERENCES</string>
 
     <!-- TODO: Remove or change this placeholder text -->
