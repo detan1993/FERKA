@@ -175,7 +175,7 @@ public class WeighSensorFragment extends Fragment {
 
                     double inventoryWeight = Double.parseDouble(inventoryJSONObject.getString("weight"));
                     double containerWeight = Double.parseDouble(jsonArray.getJSONObject(i).getString(   "weight"));
-                    dataToStore.put("inventoryWeight", "Weight: " + String.valueOf(inventoryWeight-containerWeight));
+                    dataToStore.put("inventoryWeight", "Weight: " + String.format("%.2f",inventoryWeight));
 
                     containerList.add(dataToStore);
                 }
